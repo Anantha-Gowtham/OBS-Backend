@@ -1,0 +1,20 @@
+{
+  "name": "Online Banking System Backend",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/mysql:1": {}
+  },
+  "forwardPorts": [8082, 3306],
+  "postCreateCommand": "mvn clean compile",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "ms-vscode.vscode-json"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}

@@ -1,0 +1,25 @@
+version: 1
+services:
+  - type: web
+    name: obs-backend
+    env: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -Xmx256m -jar target/online-banking-system-1.0.0.jar
+    healthCheckPath: /api/actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SPRING_DATASOURCE_URL
+        value: ${DATABASE_URL}
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: obs-database
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: obs-database
+          property: password
+  - type: database
+    name: obs-database
+    databaseName: obs_banking_system
+    user: root

@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "build": {
+    "builder": "DOCKERFILE"
+  },
+  "run": {
+    "start": "java -Xmx256m -jar target/online-banking-system-1.0.0.jar"
+  },
+  "deploy": {
+    "healthcheckPath": "/api/actuator/health",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "on_failure"
+  }
+}

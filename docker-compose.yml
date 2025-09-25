@@ -1,6 +1,5 @@
-version: '3.8'
-
 services:
+  # MySQL Database
   mysql-db:
     image: mysql:8.0
     container_name: obs-mysql
@@ -9,38 +8,119 @@ services:
       MYSQL_DATABASE: obs_banking_system
       MYSQL_ROOT_HOST: '%'
     ports:
-      - "3306:3306"
+      - "3307:3306"  # Changed from 3306 to 3307 to avoid conflict
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/mysql-setup.sql:/docker-entrypoint-initdb.d/setup.sql:ro
     networks:
       - obs-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+    restart: unless-stopped
 
+  # Backend Service
   backend:
-    build: .
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: obs-backend
     ports:
       - "8085:8085"
     environment:
+      # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/obs_banking_system?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      
+      # Email Configuration
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
+      
+      # JWT Configuration
+      APP_JWT_SECRET: ${JWT_SECRET:-2f3c9a7e8b1d4f6a2c5e7d9f0a1b3c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b}
+      APP_JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      
+      # Logging
+      LOGGING_LEVEL_COM_OBS: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
     depends_on:
       mysql-db:
         condition: service_healthy
     networks:
       - obs-network
     restart: unless-stopped
-    mem_limit: 512m
-    memswap_limit: 512m
+    mem_limit: 1g
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: obs-frontend
+    ports:
+      - "80:80"
+      - "3000:80"  # Alternative port
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8085/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - obs-network
+    restart: unless-stopped
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Adminer for Database Management (Optional)
+  adminer:
+    image: adminer:latest
+    container_name: obs-adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - obs-network
+    restart: unless-stopped
+
+  # Redis for Caching (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: obs-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - obs-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
+    driver: local
 
 networks:
   obs-network:
     driver: bridge
+    name: obs-network

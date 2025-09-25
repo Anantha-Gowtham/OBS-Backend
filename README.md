@@ -1,13 +1,56 @@
-# OBS Backend
+# OBS Banking System - Backend
 
-Spring Boot backend for the Online Banking System (OBS).
+A secure, modern banking system backend built with Spring Boot.
 
-## Modules Implemented
-- User registration & login with OTP verification
-- Account lockout after repeated failed attempts (email alerts)
-- Password reset via email token
-- Basic domain models: User, Account, Branch, Employee, Transaction, OTP, PasswordResetToken
-- Repositories for persistence (Spring Data JPA)
+## 🚀 Quick Start
+
+### Prerequisites
+- Java 17+
+- Docker & Docker Compose
+- MySQL 8.0+
+
+### Environment Setup
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/Anantha-Gowtham/OBS-Backend.git
+cd OBS-Backend
+```
+
+2. **Create environment file**
+```bash
+cp .env.example .env
+```
+
+3. **Configure your environment variables**
+```env
+# Database
+MYSQL_ROOT_PASSWORD=your_secure_password
+MYSQL_DATABASE=obs_banking
+
+# Email (SMTP)
+MAIL_USERNAME=your_email@domain.com  
+MAIL_PASSWORD=your_app_password
+
+# JWT Security
+JWT_SECRET=your_secure_jwt_secret_32_chars_min
+JWT_EXPIRATION=86400000
+```
+
+### Run with Docker
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f obs-backend
+```
+
+The backend will be available at `http://localhost:8080`
 - Security configuration (stateless, CORS, open auth endpoints)
 - Email service for OTP & alerts (async)
 - Health endpoint: `/api/health`

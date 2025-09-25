@@ -24,12 +24,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 
+/**
+ * AuthService - DEVELOPMENT VERSION with Plain Text Passwords
+ * WARNING: This version stores passwords in plain text for testing purposes only
+ * DO NOT use in production environment
+ */
 @Service
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-    
-    @Autowired
-    private AuthenticationManager authenticationManager;
     
     @Autowired
     private UserRepository userRepository;
@@ -38,25 +40,24 @@ public class AuthService {
     private RefreshTokenRepository refreshTokenRepository;
     
     @Autowired
-    private PasswordEncoder passwordEncoder;
-    
-    @Autowired
     private JwtTokenUtil jwtTokenUtil;
     
     @Autowired
     private EmailService emailService;
     
+    // Development login with plain text password comparison
     public Map<String, Object> login(Map<String, String> loginRequest) {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
         
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-            );
-            
             User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            // Plain text password comparison for development
+            if (!user.getPassword().equals(password)) {
+                throw new RuntimeException("Invalid username or password");
+            }
             
             String token = jwtTokenUtil.generateTokenFromUsername(user.getUsername());
             String refreshToken = null;
@@ -75,34 +76,35 @@ public class AuthService {
                 "id", user.getId(),
                 "username", user.getUsername(),
                 "email", user.getEmail(),
+                "firstName", user.getFirstName() != null ? user.getFirstName() : "",
+                "lastName", user.getLastName() != null ? user.getLastName() : "",
+                "phone", user.getPhone() != null ? user.getPhone() : "",
                 "role", user.getRole().toString()
             ));
             
+            log.info("User {} logged in successfully", username);
             return response;
-        } catch (BadCredentialsException e) {
-            log.warn("Login failed for {}: invalid credentials", username);
-            throw new RuntimeException("Invalid credentials");
+            
         } catch (Exception e) {
-            log.error("Unexpected error during login for {}: {}", username, e.getMessage(), e);
-            throw e;
+            log.error("Login failed for user {}: {}", username, e.getMessage());
+            throw new RuntimeException("Invalid username or password");
         }
     }
     
+    // Development registration with plain text password storage
     @Transactional
     public Map<String, Object> register(Map<String, Object> registerRequest) {
         String username = (String) registerRequest.get("username");
-        String email = (String) registerRequest.get("email");
         String password = (String) registerRequest.get("password");
-        String roleStr = (String) registerRequest.get("role");
+        String email = (String) registerRequest.get("email");
+        String firstName = (String) registerRequest.get("firstName");
+        String lastName = (String) registerRequest.get("lastName");
+        String phone = (String) registerRequest.get("phone");
+        String dateOfBirth = (String) registerRequest.get("dateOfBirth");
+        String address = (String) registerRequest.get("address");
         
-        Role role = Role.USER; // default
-        if (roleStr != null) {
-            try {
-                role = Role.valueOf(roleStr.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // Keep default role
-            }
-        }
+        // Default role is USER
+        Role role = Role.USER;
         
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("Username already exists");
@@ -115,9 +117,24 @@ public class AuthService {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
+        // Store password as plain text for development
+        user.setPassword(password);
         user.setRole(role);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setPhone(phone);
+        user.setAddress(address);
         user.setActive(true);
+        
+        // Parse date of birth if provided
+        if (dateOfBirth != null && !dateOfBirth.trim().isEmpty()) {
+            try {
+                // Assuming date format is YYYY-MM-DD
+                user.setDateOfBirth(java.sql.Date.valueOf(dateOfBirth));
+            } catch (Exception e) {
+                log.warn("Invalid date of birth format for user {}: {}", username, dateOfBirth);
+            }
+        }
         
         user = userRepository.save(user);
         
@@ -128,154 +145,76 @@ public class AuthService {
             emailSent = true;
             log.info("Welcome email sent successfully to {}", user.getEmail());
         } catch (Exception e) {
-            // Log error but don't fail registration
             log.warn("Failed to send welcome email to {}: {}", user.getEmail(), e.getMessage());
         }
         
         Map<String, Object> response = new HashMap<>();
-        if (emailSent) {
-            response.put("message", "Your account has been created successfully! Please check your email for a welcome message and then login to your new OBS account.");
-        } else {
-            response.put("message", "Your account has been created successfully! Please login to your new OBS account. (Note: Welcome email could not be sent)");
-        }
-        response.put("success", true);
-        response.put("user", Map.of(
-            "id", user.getId(),
-            "username", user.getUsername(),
-            "email", user.getEmail(),
-            "role", user.getRole().toString()
-        ));
+        response.put("message", "Registration successful");
         response.put("emailSent", emailSent);
-        
-        return response;
-    }
-    
-    public Map<String, Object> forgotPassword(Map<String, String> request) {
-        String email = request.get("email");
-        
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        
-        // Generate reset token (simplified - in production use secure tokens)
-        String resetToken = "reset_" + System.currentTimeMillis();
-        
-        // Send reset email
-        try {
-            emailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), resetToken);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to send reset email");
-        }
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Password reset email sent");
-        return response;
-    }
-    
-    @Transactional
-    public Map<String, Object> resetPassword(String token, String newPassword) {
-        // Simplified token validation - in production use proper token storage and validation
-        if (!token.startsWith("reset_")) {
-            throw new RuntimeException("Invalid reset token");
-        }
-        
-        // For demo purposes, extract email from a more sophisticated token system
-        // In production, store tokens in database with expiration
-        String email = "demo@example.com"; // This should be extracted from token
-        
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Password reset successfully");
-        return response;
-    }
-    
-    public Map<String, Object> changePassword(String username, String oldPassword, String newPassword) {
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new RuntimeException("Invalid current password");
-        }
-        
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Password changed successfully");
-        return response;
-    }
-    
-    @Transactional
-    public Map<String, Object> refreshToken(String refreshTokenStr) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenStr)
-            .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
-        
-        if (refreshToken.isRevoked()) {
-            throw new RuntimeException("Refresh token has been revoked");
-        }
-        
-        if (refreshToken.getExpiresAt().isBefore(Instant.now())) {
-            refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh token has expired");
-        }
-        
-        User user = refreshToken.getUser();
-        String newAccessToken = jwtTokenUtil.generateTokenFromUsername(user.getUsername());
-        String newRefreshToken = generateRefreshToken(user);
-        
-        // Revoke the old refresh token
-        refreshToken.setRevoked(true);
-        refreshTokenRepository.save(refreshToken);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", newAccessToken);
-        response.put("refreshToken", newRefreshToken);
         response.put("user", Map.of(
             "id", user.getId(),
             "username", user.getUsername(),
             "email", user.getEmail(),
+            "firstName", user.getFirstName() != null ? user.getFirstName() : "",
+            "lastName", user.getLastName() != null ? user.getLastName() : "",
             "role", user.getRole().toString()
         ));
         
-        return response;
-    }
-    
-    @Transactional
-    public Map<String, Object> logout(String refreshTokenStr, String username) {
-        if (refreshTokenStr != null) {
-            Optional<RefreshToken> refreshToken = refreshTokenRepository.findByToken(refreshTokenStr);
-            if (refreshToken.isPresent()) {
-                refreshToken.get().setRevoked(true);
-                refreshTokenRepository.save(refreshToken.get());
-            }
-        }
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Logged out successfully");
+        log.info("User {} registered successfully with plain text password", username);
         return response;
     }
     
     private String generateRefreshToken(User user) {
-        // Revoke any existing refresh tokens for this user
-        List<RefreshToken> existingTokens = refreshTokenRepository.findByUser(user);
-        for (RefreshToken token : existingTokens) {
-            if (!token.isRevoked()) {
-                token.setRevoked(true);
-                refreshTokenRepository.save(token);
-            }
-        }
+        // Clean up existing refresh tokens for this user
+        refreshTokenRepository.deleteByUser(user);
         
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setUser(user);
-        refreshToken.setExpiresAt(Instant.now().plusSeconds(7 * 24 * 60 * 60)); // 7 days
-        refreshToken.setRevoked(false);
+        refreshToken.setExpiryDate(Instant.now().plusSeconds(7 * 24 * 60 * 60)); // 7 days
         
-        refreshToken = refreshTokenRepository.save(refreshToken);
+        refreshTokenRepository.save(refreshToken);
         return refreshToken.getToken();
+    }
+    
+    public Map<String, Object> refreshToken(Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        
+        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(refreshToken);
+        if (!tokenOpt.isPresent()) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+        
+        RefreshToken token = tokenOpt.get();
+        if (token.getExpiryDate().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(token);
+            throw new RuntimeException("Refresh token expired");
+        }
+        
+        User user = token.getUser();
+        String newJwtToken = jwtTokenUtil.generateTokenFromUsername(user.getUsername());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", newJwtToken);
+        response.put("refreshToken", refreshToken);
+        
+        return response;
+    }
+    
+    // Get all users for admin purposes
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+    
+    // Reset password (plain text for development)
+    public void resetPassword(String username, String newPassword) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Store new password as plain text
+        user.setPassword(newPassword);
+        userRepository.save(user);
+        
+        log.info("Password reset for user {} with plain text storage", username);
     }
 }

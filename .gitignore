@@ -1,0 +1,124 @@
+# ========================================
+# OBS Backend - Java Spring Boot .gitignore
+# ========================================
+
+# Compiled Class Files
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse IDE
+.project
+.classpath
+.factorypath
+.settings/
+.metadata/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+application-local.properties
+application-prod.properties
+
+# Logs
+*.log
+logs/
+replay_*.log
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.cache/
+
+# Security Files
+*.pem
+*.key
+*.crt
+*.keystore
+*.jks
+SecurityConfig.backup
+
+# Docker
+.dockerignore.local
+
+# Spring Boot
+.gradle/
+build/
+
+# Test Results
+*.tlog
+
+# Maven Downloads
+maven.zip
+apache-maven-*/
+
+# Documentation (non-essential)
+BACKEND_CORRECTIONS_SUMMARY.md
+DEPLOYMENT_GUIDE.md
+README_DEPLOY.md
+EMAIL_SERVICE_DEBUG_GUIDE.md
+SYSTEM_FIXES_SUMMARY.md
+
+# Migration Scripts (keep only essential ones, ignore others)
+beneficiary-billpay-migration.sql
+cards-migration.sql
+database_updates.sql
+standing-instructions-migration.sql
+update_user_profiles.sql
+database-reset.sql
+
+# Deployment Scripts (non-essential)
+deploy-options.ps1
+verify-backend.ps1
+verify-backend.sh
+reset-and-restart.bat
+reset-database.bat
+reset-database.ps1
+create-database.bat
+
+# DevContainer
+.devcontainer/
+
+# Package files
+package-lock.json
+node_modules/

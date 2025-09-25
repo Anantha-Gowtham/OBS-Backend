@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * Authentication Controller - User authentication and registration endpoints
- * Enhanced with comprehensive security features including JWT token management
- * Public endpoints for authentication operations
+ * Authentication Controller - DEVELOPMENT VERSION
+ * Uses plain text passwords for testing purposes
+ * WARNING: Do not use in production
  */
 @RestController
 @RequestMapping("/auth")
@@ -25,20 +25,16 @@ public class AuthController {
         try {
             Map<String, Object> response = authService.login(loginRequest);
             return ResponseEntity.ok(response);
-        } catch (org.springframework.security.core.AuthenticationException ae) {
-            return ResponseEntity.status(401).body(Map.of("message", "Invalid username or password"));
         } catch (RuntimeException re) {
-            // Common business errors like Invalid credentials
             return ResponseEntity.status(401).body(Map.of("message", re.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", "Login failed: " + e.getMessage()));
         }
     }
 
-    // Lightweight probe to confirm unauthenticated access under context path
     @GetMapping("/probe")
     public ResponseEntity<?> probe() {
-        return ResponseEntity.ok(Map.of("status", "ok", "path", "/auth/probe"));
+        return ResponseEntity.ok(Map.of("status", "ok", "path", "/auth/probe", "mode", "development"));
     }
 
     @PostMapping("/register")
@@ -49,52 +45,40 @@ public class AuthController {
         } catch (RuntimeException re) {
             return ResponseEntity.badRequest().body(Map.of("message", re.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Registration failed"));
+            return ResponseEntity.status(500).body(Map.of("message", "Registration failed: " + e.getMessage()));
         }
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        Map<String, Object> response = authService.forgotPassword(request);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request, Authentication auth) {
-        String username = auth.getName();
-        String oldPassword = request.get("oldPassword");
-        String newPassword = request.get("newPassword");
-        
-        Map<String, Object> response = authService.changePassword(username, oldPassword, newPassword);
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
         try {
-            String refreshToken = request.get("refreshToken");
-            Map<String, Object> response = authService.refreshToken(refreshToken);
+            Map<String, Object> response = authService.refreshToken(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException re) {
-            return ResponseEntity.badRequest().body(Map.of("message", re.getMessage()));
+            return ResponseEntity.status(401).body(Map.of("message", re.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Token refresh failed"));
+            return ResponseEntity.status(500).body(Map.of("message", "Token refresh failed: " + e.getMessage()));
         }
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody Map<String, String> request, Authentication auth) {
-        String refreshToken = request.get("refreshToken");
-        String username = auth != null ? auth.getName() : null;
-        Map<String, Object> response = authService.logout(refreshToken, username);
-        return ResponseEntity.ok(response);
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            return ResponseEntity.ok(authService.getAllUsers());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to fetch users: " + e.getMessage()));
+        }
     }
 
-    @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(Authentication auth) {
-        return ResponseEntity.ok(Map.of(
-            "username", auth.getName(),
-            "authorities", auth.getAuthorities()
-        ));
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String username = request.get("username");
+            String newPassword = request.get("newPassword");
+            authService.resetPassword(username, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password reset successful"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Password reset failed: " + e.getMessage()));
+        }
     }
 }

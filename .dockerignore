@@ -1,0 +1,144 @@
+# ========================================
+# OBS Backend - Docker Ignore
+# ========================================
+
+# Build artifacts that shouldn't be copied to Docker
+target/
+*.jar
+*.war
+*.ear
+
+# Maven wrapper and installation (we install Maven in container)
+apache-maven-3.9.4/
+.mvn/
+mvnw
+mvnw.cmd
+maven.zip
+
+# IDE and development files
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.idea/
+*.iml
+*.ipr
+*.iws
+.metadata/
+
+# Git repository
+.git/
+.gitignore
+
+# Logs & Temporary Files
+*.log
+logs/
+replay_pid*.log
+*.tmp
+*.temp
+*.backup
+*.bak
+
+# Environment files (handled by container env vars)
+.env
+.env.*
+application-local.properties
+application-prod.properties
+
+# Documentation
+README*.md
+*.md
+DEPLOYMENT_GUIDE.md
+BACKEND_CORRECTIONS_SUMMARY.md
+EMAIL_SERVICE_DEBUG_GUIDE.md
+SYSTEM_FIXES_SUMMARY.md
+
+# Scripts (not needed in container)
+*.bat
+*.ps1
+*.sh
+deploy-options.ps1
+verify-backend.*
+reset-*
+create-database.bat
+
+# Database files
+*.db
+*.sqlite
+*.sql.backup
+
+# Development containers
+.devcontainer/
+
+# Docker files (avoid recursive copying)
+Dockerfile*
+docker-compose*.yml
+
+# Node.js (if any)
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Security files
+SecurityConfig.backup
+*.pem
+*.key
+*.crt
+
+# Migration scripts (not needed in runtime)
+*-migration.sql
+database_updates.sql
+update_user_profiles.sql
+
+# Railway/Render configs (deployment specific)
+railway.json
+render.yaml
+
+# Environment and configuration files that might contain secrets
+.env
+.env.*
+
+# Database and deployment files
+*.sql
+create-database.bat
+reset-and-restart.bat
+verify-backend.*
+deploy-options.ps1
+
+# Documentation (not needed in container)
+README*.md
+*.md
+
+# Docker files themselves
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Package managers
+package-lock.json
+node_modules/
+
+# Railway and render deployment files
+railway.json
+render.yaml
+
+# Backup files
+*.backup
+
+# Dev container
+.devcontainer/

@@ -1,17 +1,15 @@
-# ========================================
-# OBS Backend - Java Spring Boot .gitignore
-# ========================================
+# ===============================================
+# OBS Backend - Clean Production .gitignore
+# ===============================================
 
-# Compiled Class Files
-*.class
+# Maven Build Artifacts
+target/
 *.jar
 *.war
 *.ear
 *.nar
-hs_err_pid*
 
-# Maven
-target/
+# Maven Files
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -22,52 +20,53 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-# Eclipse IDE
-.project
-.classpath
-.factorypath
-.settings/
-.metadata/
-
-# IntelliJ IDEA
+# IDE Files
+.vscode/
 .idea/
 *.iws
 *.iml
 *.ipr
+.settings/
+.project
+.classpath
+.factorypath
+.metadata/
+*.swp
+*.swo
+*~
 
-# VS Code
-.vscode/
-
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-# Environment Variables
-.env
-.env.local
-.env.production
-application-local.properties
-application-prod.properties
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
 # Logs
 *.log
 logs/
 replay_*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Database Files
-*.db
-*.sqlite
-*.sqlite3
+# Environment Variables & Secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+application-local.properties
+application-prod.properties
 
 # Temporary Files
 *.tmp
 *.temp
-*.bak
 *.backup
-*~
+*.bak
 .cache/
 
 # Security Files
@@ -78,47 +77,100 @@ replay_*.log
 *.jks
 SecurityConfig.backup
 
-# Docker
-.dockerignore.local
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
 
-# Spring Boot
-.gradle/
-build/
-
-# Test Results
-*.tlog
-
-# Maven Downloads
-maven.zip
-apache-maven-*/
-
-# Documentation (non-essential)
+# Documentation (keep only README.md)
 BACKEND_CORRECTIONS_SUMMARY.md
 DEPLOYMENT_GUIDE.md
 README_DEPLOY.md
 EMAIL_SERVICE_DEBUG_GUIDE.md
 SYSTEM_FIXES_SUMMARY.md
+DOCKER_*.md
+TEST_*.md
 
-# Migration Scripts (keep only essential ones, ignore others)
+# Scripts & Utilities (non-essential)
+*.bat
+*.ps1
+*.sh
+deploy-options.ps1
+verify-backend.*
+reset-and-restart.bat
+reset-database.bat
+reset-database.ps1
+create-database.bat
+docker-scripts.*
+
+# Migration Files (keep only essential)
+database-reset.sql
 beneficiary-billpay-migration.sql
 cards-migration.sql
 database_updates.sql
 standing-instructions-migration.sql
 update_user_profiles.sql
-database-reset.sql
 
-# Deployment Scripts (non-essential)
-deploy-options.ps1
-verify-backend.ps1
-verify-backend.sh
-reset-and-restart.bat
-reset-database.bat
-reset-database.ps1
-create-database.bat
-
-# DevContainer
+# DevContainer & Docker Override
 .devcontainer/
+docker-compose.override.yml
 
-# Package files
-package-lock.json
+# Maven Downloads
+maven.zip
+apache-maven-*/
+
+# Node.js (if any)
 node_modules/
+package-lock.json
+
+# Spring Boot
+.gradle/
+build/
+out/
+
+# Test Results
+*.tlog
+surefire-reports/
+failsafe-reports/
+
+# Package Files
+*.zip
+*.tar.gz
+*.rar
+
+# Compiled class files
+*.class
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+hs_err_pid*
+replay_pid*
+
+# virtual machine crash logs
+hs_err_pid*
+
+# Eclipse
+.apt_generated
+.springBeans
+.sts4-cache
+
+# IntelliJ
+out/
+.idea_modules/
+*.iml
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
